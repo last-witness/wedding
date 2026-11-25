@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сватбата на Никола и Симона</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Great+Vibes&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --olive: #4C5422;
+    --burgundy: #5C1A24;
+    --cream: #F1E6D3;
+    --text-dark: #2E2E2E;
+    --paper: #FAFAFA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html { scroll-behavior: smooth; }
+  body{
+    font-family:"Cormorant Garamond", Georgia, serif;
+    color:var(--text-dark);
+    overflow:hidden;
+  }
+
+  /* ===== ЕКРАН С ПОКАНАТА ===== */
+  #invitation-screen{
+    position:fixed; inset:0; z-index:100;
+    display:flex; flex-direction: column; align-items:center; justify-content:center;
+    background: #E8E4DB;
+    transition: background 2s ease, opacity 1.5s ease, visibility 1.5s;
+  }
+  
+  #invitation-screen.bg-change {
+    background: radial-gradient(circle at 50% 50%, var(--olive) 0%, var(--burgundy) 100%);
+  }
+
+  #invitation-screen.hidden{opacity:0; visibility:hidden}
+
+  .envelope-text-top {
+    font-family: "Great Vibes", cursive;
+    font-size: clamp(24px, 6vw, 36px);
+    color: #2B2B2B;
+    margin-bottom: 25px;
+    text-align: center;
+    line-height: 1.2;
+    transition: color 1s ease;
+    z-index: 10;
+  }
+  #invitation-screen.bg-change .envelope-text-top {
+    color: var(--cream);
+  }
+
+  /* ===== СТРУКТУРА НА ПЛИКА ===== */
+  .envelope-wrapper {
+    position: relative;
+    width: min(90vw, 340px);
+    aspect-ratio: 4/5.5;
+    perspective: 1500px;
+    cursor: pointer;
+  }
+
+  .env-back, .env-pocket, .env-flap {
+    position: absolute;
+    background: #FCFBF8;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  }
+
+  .env-back {
+    inset: 0;
+    border-radius: 4px;
+    z-index: 1;
+  }
+
+  .card {
+    position: absolute;
+    left: 5%; top: 5%;
+    width: 90%; height: 90%;
+    background: #FFFFFF;
+    z-index: 2;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; text-align: center;
+    border-radius: 2px;
+    transition: transform 1.2s cubic-bezier(.6,.05,.3,1) .4s;
+    border: 1px solid #EFEFEF;
+    box-shadow: inset 0 0 0 4px #FFFFFF, inset 0 0 0 5px #E5E5E5, 0 5px 20px rgba(0,0,0,0.05);
+  }
+
+  .env-pocket {
+    bottom: 0; left: 0; width: 100%; height: 55%;
+    z-index: 3;
+    border-radius: 0 0 4px 4px;
+    -webkit-mask-image: radial-gradient(circle at 50% 100%, transparent 10px, black 11px);
+    mask-image: radial-gradient(circle at 50% 100%, transparent 10px, black 11px);
+    -webkit-mask-size: 20px 20px;
+    mask-size: 20px 20px;
+    -webkit-mask-position: center top;
+    mask-position: center top;
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.03);
+  }
+
+  .env-flap {
+    top: 0; left: 0; width: 100%; height: 55%;
+    z-index: 4;
+    transform-origin: top center;
+    transition: transform 1s cubic-bezier(.6,.05,.3,1), z-index 0s 0.5s;
+    border-radius: 4px 4px 0 0;
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% 90%, 
+      95% 95%, 90% 90%, 85% 95%, 80% 90%, 75% 95%, 70% 90%, 65% 95%, 60% 90%, 55% 95%, 
+      50% 100%, 
+      45% 95%, 40% 90%, 35% 95%, 30% 90%, 25% 95%, 20% 90%, 15% 95%, 10% 90%, 5% 95%, 0% 90%
+    );
+    box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+    background-image: linear-gradient(180deg, #FFFFFF, #F2F0E9);
+  }
+
+  .pearl {
+    position: absolute;
+    top: 53.5%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px; height: 18px;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #e0dfdb 60%, #b0aeaa);
+    border-radius: 50%; z-index: 5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: opacity 0.5s ease;
+  }
+
+  .envelope-wrapper.open .env-flap {
+    transform: rotateX(180deg);
+    z-index: 1;
+  }
+  
+  .envelope-wrapper.open .card {
+    transform: translateY(-35%);
+  }
+
+  .envelope-wrapper.open .pearl {
+    opacity: 0;
+  }
+
+  /* ===== ТЕКСТ В КАРТИЧКАТА ===== */
+  .names-reveal {
+    opacity: 0; 
+    transform: translateY(10px); 
+    transition: opacity 1.5s ease, transform 1.5s ease;
+  }
+  .names-reveal.show {
+    opacity: 1; transform: translateY(0); 
+  }
+
+  .card h1{ 
+    font-family: "Great Vibes", cursive; font-size: clamp(34px, 7vw, 44px); 
+    font-weight: 400; color: var(--burgundy); line-height: 1.1; margin: 15px 0;
+  }
+  .card .amp{ color: var(--olive); font-size: 0.8em; }
+  .card .date{ 
+    font-family:"Montserrat",sans-serif; font-weight: 400; font-size: 11px; 
+    letter-spacing: 0.3em; color: #555555; margin-bottom: 5px;
+  }
+  .card .subtext {
+    font-family: "Cormorant Garamond", serif; font-size: 15px; font-style: italic; color: #666; margin-top: 20px;
+  }
+
+  .hint{
+    margin-top: 30px;
+    font-family:"Montserrat",sans-serif; font-weight:400; font-size:11px; 
+    letter-spacing:.25em; text-transform:uppercase; color:#888; 
+    animation:pulse 2.2s infinite; transition: color 1s ease;
+  }
+  #invitation-screen.bg-change .hint { color: var(--cream); }
+  .hint.gone{opacity:0; transition:opacity .4s}
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+  .confetti{
+    position:fixed; top:-10px; width:8px; height:14px; z-index:200;
+    pointer-events:none; border-radius:2px; animation:fall linear forwards;
+  }
+  @keyframes fall{ to{ transform:translateY(105vh) rotate(720deg); opacity:.9; } }
+
+  /* ===== САМИЯТ САЙТ ===== */
+  #site{ display:none; }
+  #site.visible{ display:block; animation:fadeIn 1.5s ease; }
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  body.unlocked{ overflow:auto; }
+
+  #site {
+    background-color: var(--cream);
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(92, 26, 36, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(76, 84, 34, 0.2) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(241, 230, 211, 1) 0px, transparent 80%),
+      radial-gradient(at 100% 100%, rgba(92, 26, 36, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(76, 84, 34, 0.2) 0px, transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  section{ padding:90px 20px; max-width:900px; margin:0 auto; }
+  
+  h2{
+    text-align:center; font-family: "Great Vibes", cursive; font-size:clamp(40px,6vw,56px);
+    color: var(--burgundy); letter-spacing:.05em; margin-bottom:36px; font-weight: 400;
+    text-shadow: 0 2px 10px rgba(241, 230, 211, 0.8);
+  }
+  h2::after{ content:""; display:block; width:60px; height:1px; background:var(--olive); margin:10px auto 0; }
+
+  #hero{
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:40px 20px;
+  }
+  #hero .names{ 
+    font-family: "Great Vibes", cursive; font-size:clamp(50px,12vw,90px); 
+    color:var(--burgundy); line-height:1.1; text-shadow: 0 4px 15px rgba(255,255,255,0.6);
+  }
+  #hero .names .amp{ color:var(--olive); font-size: 0.6em; }
+  #hero .sub{ font-family:"Montserrat",sans-serif; font-weight:400; letter-spacing:.4em; font-size:clamp(12px,2.5vw,15px); color:var(--olive); margin-top:22px; }
+  #hero .divider{ width:1px; height:70px; background:var(--burgundy); margin:34px 0; opacity:.4; }
+
+  .countdown{ display:flex; gap:clamp(14px,4vw,40px); justify-content:center; flex-wrap:wrap; }
+  .cd-item{ display:flex; flex-direction:column; align-items:center; min-width:60px; }
+  .cd-num{ font-size:clamp(30px,6vw,46px); font-weight:400; color:var(--olive); font-variant-numeric:tabular-nums; text-shadow: 0 2px 5px rgba(255,255,255,0.8); }
+  .cd-label{ font-family:"Montserrat",sans-serif; font-weight:400; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--burgundy); margin-top:6px; }
+
+  .placeholder{
+    text-align:center; color:#7a7a7a; font-style:italic; font-family:"Cormorant Garamond",serif; font-size:18px; padding:40px 0;
+  }
+
+  /* Галерия */
+  .upload-btn {
+    display:inline-block; padding:14px 36px; background:var(--olive); color:var(--cream);
+    border-radius:30px; font-family:"Montserrat",sans-serif; font-weight:400;
+    letter-spacing:.15em; cursor:pointer; transition:background .3s; border: 1px solid var(--olive);
+    box-shadow: 0 4px 15px rgba(76, 84, 34, 0.3);
+  }
+  .upload-btn:hover { background:var(--burgundy); border-color: var(--burgundy); box-shadow: 0 4px 15px rgba(92, 26, 36, 0.3); }
+  
+  #gallery-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; }
+  
+  #gallery-grid img, #gallery-grid video { 
+    width:100%; height:140px; object-fit:cover; border-radius:4px; 
+    box-shadow:0 4px 12px rgba(0,0,0,.15); transition:transform .3s; border: 3px solid var(--paper); 
+  }
+  #gallery-grid img:hover, #gallery-grid video:hover { transform:scale(1.03); }
+
+  /* Участници */
+  .vendors-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px; padding: 20px 0;
+  }
+  .vendor-card {
+    background: rgba(250, 250, 250, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(92, 26, 36, 0.15); border-radius: 8px; padding: 30px 20px;
+    text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: transform 0.3s ease;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .vendor-card:hover { transform: translateY(-5px); }
+  .vendor-role { font-family: "Montserrat", sans-serif; font-weight: 500; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--olive); margin-bottom: 15px; }
+  .vendor-name { font-family: "Great Vibes", cursive; font-size: 30px; color: var(--burgundy); line-height: 1.2; }
+  .vendor-sub { font-family: "Montserrat", sans-serif; font-size: 12px; color: #666; margin-top: 8px; letter-spacing: 1px; }
+
+  /* Локация */
+  .location-info { text-align: center; margin-bottom: 30px; }
+  .location-name { font-family: "Cormorant Garamond", serif; font-size: 28px; color: var(--burgundy); margin-bottom: 8px; font-weight: 500; }
+  .location-sub { font-family: "Montserrat", sans-serif; font-size: 14px; color: var(--olive); letter-spacing: 2px; text-transform: uppercase; }
+  .map-wrapper { 
+    width:100%; height:400px; border: 5px solid var(--paper); 
+    box-shadow: 0 10px 30px rgba(0,0,0,.15); border-radius: 8px; overflow: hidden; 
+  }
+  .map-wrapper iframe { width: 100%; height: 100%; border: 0; }
+
+</style>
+</head>
+<body>
+
+  <!-- ====== ПОКАНА ====== -->
+  <div id="invitation-screen">
+    <div class="envelope-text-top">Сватбата на<br>Никола и Симона</div>
+
+    <div class="envelope-wrapper" id="envelope">
+      <div class="env-back"></div>
+      <div class="card">
+        <div class="card-inner">
+          <div class="date">26 • 08 • 2027</div>
+          
+          <div class="names-reveal" id="namesReveal">
+            <h1>Симона <span class="amp">&</span> Никола</h1>
+          </div>
+          
+          <div class="date">СВАТБА</div>
+          <div class="subtext">С радост Ви каним на нашия специален ден</div>
+        </div>
+      </div>
+      <div class="env-pocket"></div>
+      <div class="env-flap"></div>
+      <div class="pearl"></div>
+    </div>
+    
+    <div class="hint" id="hint">Натиснете, за да отворите</div>
+  </div>
+
+  <!-- ====== САЙТЪТ ====== -->
+  <main id="site">
+    <section id="hero">
+      <div class="names">Симона <span class="amp">&</span> Никола</div>
+      <div class="sub">26 АВГУСТ 2027</div>
+      <div class="divider"></div>
+      <div class="countdown" id="countdown">
+        <div class="cd-item"><span class="cd-num" id="cd-d">—</span><span class="cd-label">дни</span></div>
+        <div class="cd-item"><span class="cd-num" id="cd-h">—</span><span class="cd-label">часа</span></div>
+        <div class="cd-item"><span class="cd-num" id="cd-m">—</span><span class="cd-label">минути</span></div>
+        <div class="cd-item"><span class="cd-num" id="cd-s">—</span><span class="cd-label">секунди</span></div>
+      </div>
+    </section>
+
+    <section id="program">
+      <h2>Програма</h2>
+      <p class="placeholder">Тук ще бъде програмата на сватбения ден.</p>
+    </section>
+
+    <section id="menu">
+      <h2>Меню</h2>
+      <p class="placeholder">Тук ще бъде менюто.</p>
+    </section>
+
+    <section id="gallery">
+      <h2>Галерия</h2>
+      <p style="text-align:center; color:var(--olive); margin-bottom:30px; font-family:Montserrat,sans-serif; font-weight:400; font-size:14px; letter-spacing: 1px; text-shadow: 0 1px 5px rgba(255,255,255,0.8);">
+        Споделете вашите снимки и клипове от нашия специален ден
+      </p>
+
+      <div style="text-align:center; margin-bottom:40px;">
+        <label for="photo-upload" class="upload-btn">📷 Качи снимка или клип</label>
+        <input type="file" id="photo-upload" accept="image/*,video/*" multiple style="display:none;">
+        <p id="upload-status" style="font-family:Montserrat,sans-serif; font-size:13px; color:var(--burgundy); margin-top:12px; font-weight: 500;"></p>
+      </div>
+
+      <div id="gallery-grid"></div>
+    </section>
+
+    <!-- ОБНОВЕНА СЕКЦИЯ УЧАСТНИЦИ -->
+    <section id="vendors">
+      <h2>Участници</h2>
+      <div class="vendors-grid">
+        
+        <div class="vendor-card">
+          <div class="vendor-role">Кумове</div>
+          <div class="vendor-name">...</div> <!-- Тук по-късно ще сложим имената -->
+        </div>
+
+        <div class="vendor-card">
+          <div class="vendor-role">Фотограф</div>
+          <div class="vendor-name">Георги Вачев</div>
+        </div>
+        
+        <div class="vendor-card">
+          <div class="vendor-role">Видео</div>
+          <div class="vendor-name">VIDEOZANI</div>
+        </div>
+
+        <div class="vendor-card">
+          <div class="vendor-role">DJ</div>
+          <div class="vendor-name">DJ HRISKO</div>
+          <div class="vendor-sub">Християн Хаджицанчев</div>
+        </div>
+        
+        <div class="vendor-card">
+          <div class="vendor-role">Украса и декор</div>
+          <div class="vendor-name">Сватбена агенция "Queen"</div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="location">
+      <h2>Локация</h2>
+      <div class="location-info">
+        <div class="location-name">Villa Yustina</div>
+        <div class="location-sub">Парк-лозе Вила Юстина</div>
+      </div>
+      <div class="map-wrapper">
+        <iframe 
+          src="https://maps.google.com/maps?q=42.069685,24.514103&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+          allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    </section>
+
+    <footer style="text-align:center; padding:40px; font-family:Montserrat,sans-serif; font-weight:300; font-size:12px; color:var(--burgundy); font-weight: 500;">
+      С любов, Никола & Симона
+    </footer>
+  </main>
+
+  <!-- ====== СКРИПТОВЕ ====== -->
+  <script>
+    const screen   = document.getElementById('invitation-screen');
+    const envelope = document.getElementById('envelope');
+    const hint     = document.getElementById('hint');
+    const site     = document.getElementById('site');
+    const namesReveal = document.getElementById('namesReveal');
+    let opened = false;
+
+    function makeConfetti(){
+      const colors = ['#5C1A24', '#4C5422', '#F1E6D3', '#FFFFFF']; 
+      for(let i=0;i<60;i++){
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random()*100 + 'vw';
+        c.style.background = colors[Math.floor(Math.random()*colors.length)];
+        c.style.animationDuration = (2 + Math.random()*2.5) + 's';
+        c.style.animationDelay = (Math.random()*0.6) + 's';
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(), 6000);
+      }
+    }
+
+    function openInvitation(){
+      if(opened) return;
+      opened = true;
+      hint.classList.add('gone');
+      
+      envelope.classList.add('open');
+      
+      setTimeout(() => {
+        screen.classList.add('bg-change');
+      }, 400); 
+
+      setTimeout(() => {
+        namesReveal.classList.add('show');
+      }, 1000); 
+
+      setTimeout(() => {
+        makeConfetti();
+      }, 1200);
+
+      setTimeout(() => {
+        screen.classList.add('hidden');
+        site.classList.add('visible');
+        document.body.classList.add('unlocked');
+      }, 4500);
+    }
+    
+    envelope.addEventListener('click', openInvitation);
+
+    const weddingDate = new Date('2027-08-26T00:00:00+03:00').getTime();
+    const dEl = document.getElementById('cd-d');
+    const hEl = document.getElementById('cd-h');
+    const mEl = document.getElementById('cd-m');
+    const sEl = document.getElementById('cd-s');
+
+    function pad(n){ return String(n).padStart(2,'0'); }
+
+    function tick(){
+      const diff = weddingDate - Date.now();
+      if(diff <= 0){
+        dEl.textContent = hEl.textContent = mEl.textContent = sEl.textContent = '0';
+        return;
+      }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor(diff % 86400000 / 3600000);
+      const m = Math.floor(diff % 3600000 / 60000);
+      const s = Math.floor(diff % 60000 / 1000);
+      dEl.textContent = d;
+      hEl.textContent = pad(h);
+      mEl.textContent = pad(m);
+      sEl.textContent = pad(s);
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+
+  <!-- Supabase -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    // ⬇️⬇️⬇️ ВМЪКНЕТЕ ВАШИТЕ КЛЮЧОВЕ ТУК ⬇️⬇️⬇️
+    const supabaseUrl = 'ВАШИЯ_PROJECT_URL'
+    const supabaseKey = 'ВАШИЯ_ANON_KEY'
+    // ⬆️⬆️⬆️ ВМЪКНЕТЕ ВАШИТЕ КЛЮЧОВЕ ТУК ⬆️⬆️⬆️
+    
+    const BUCKET = 'wedding-photos'
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+    const uploadInput = document.getElementById('photo-upload')
+    const statusEl = document.getElementById('upload-status')
+    const grid = document.getElementById('gallery-grid')
+
+    uploadInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files)
+      if (!files.length) return
+
+      statusEl.textContent = `Качване на ${files.length} файла... Моля изчакайте.`
+      let success = 0
+
+      for (const file of files) {
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`
+        const { error } = await supabase.storage.from(BUCKET).upload(fileName, file)
+
+        if (error) {
+          console.error('Грешка:', error)
+          statusEl.textContent = 'Възникна грешка. Уверете се, че форматът е позволен.'
+        } else {
+          success++
+        }
+      }
+
+      statusEl.textContent = `Готово! Успешно качени ${success} от ${files.length} файла.`
+      uploadInput.value = ''
+      loadGallery()
+    })
+
+    async function loadGallery() {
+      const { data, error } = await supabase.storage.from(BUCKET).list('', {
+        limit: 200,
+        sortBy: { column: 'created_at', order: 'desc' }
+      })
+
+      if (error) { console.error(error); return }
+
+      grid.innerHTML = ''
+      if(data.length === 0) {
+         grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:var(--olive); font-style:italic;">Все още няма качени файлове. Бъдете първи!</p>'
+         return;
+      }
+
+      data.forEach(file => {
+        const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(file.name)
+        
+        const isVideo = file.name.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/i);
+
+        if (isVideo) {
+          const video = document.createElement('video')
+          video.src = urlData.publicUrl
+          video.controls = true;
+          video.preload = 'metadata';
+          grid.appendChild(video)
+        } else {
+          const img = document.createElement('img')
+          img.src = urlData.publicUrl
+          img.alt = 'Сватбена снимка'
+          img.loading = 'lazy'
+          grid.appendChild(img)
+        }
+      })
+    }
+
+    loadGallery()
+  </script>
+</body>
+</html>
